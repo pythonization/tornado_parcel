@@ -17,6 +17,16 @@ pip install -r requirements.txt
 # pip install autopep8
 # pip install pylint
 # pip install tornado
+# pip install SQLAlchemy
+
+./tornado_parcel.py init_db
 
 # spell-checker: enable
+```
+
+## Run web-server
+
+```bash
+source .venv/bin/activate
+./tornado_parcel.py run
 ```

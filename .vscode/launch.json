@@ -9,6 +9,9 @@
             "type": "python",
             "request": "launch",
             "program": "tornado_parcel.py",
+            "args": [
+                "run"
+            ],
             "console": "integratedTerminal",
             "justMyCode": true
         }
