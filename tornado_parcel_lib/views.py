@@ -1,17 +1,30 @@
 """Routes and Web application itself.
 """
 import asyncio
-from sqlalchemy import select
+import enum
+import json
+
+# from sqlalchemy import select
 import tornado
 
 from .models import (
-    LockerStatusEnum,
     Locker,
     Session,
 )
 
 
 APP_PORT = 8888
+
+
+def additional_convertor(obj):
+    """Help "json.dumps(" to convert some objects.
+    """
+    if isinstance(obj, enum.Enum):
+        return obj.name
+
+    raise TypeError(
+        'Unknown object during JSON parsing', obj
+    )
 
 
 # region routes
@@ -37,32 +50,55 @@ class HandlerLocker(tornado.web.RequestHandler):
         """Return list of lockers or single locker.
         """
         with Session() as session:
-            print(
-                list(
-                    session.scalars(
-                        select(Locker)
-                    )
+            all_recs = [
+                l.__dict__
+                for l in session.query(Locker).all()
+            ]
+            for r in all_recs:
+                del r['_sa_instance_state']
+
+            self.write(
+                json.dumps(
+                    all_recs,
+                    default=additional_convertor
                 )
             )
-        self.write("Temp_answer")
 
     def post(self):
         """Create new locker.
         """
-        with Session.begin() as session:
-            session.add(
-                Locker(
-                    capacity_xs=20,
-                    capacity_s=20,
-                    capacity_m=20,
-                    capacity_l=10,
-                    capacity_xl=5,
-
-                    status=LockerStatusEnum.OK,
-                    full_address='Rimi RAF, Jelgava, Latvia'
+        with Session() as session:
+            locker_rec = Locker(
+                **tornado.escape.json_decode(
+                    self.request.body
                 )
             )
-        self.write("Temp_answer_of_create")
+            session.add(locker_rec)
+
+            # commit now to get ID of record
+            session.commit()
+
+            self.write(
+                str(locker_rec.id)
+            )
+
+    # def post(self):
+    #     """Create new locker.
+    #     """
+    #     with Session.begin() as session:
+    #         session.add(
+    #             Locker(
+    #                 capacity_xs=20,
+    #                 capacity_s=20,
+    #                 capacity_m=20,
+    #                 capacity_l=10,
+    #                 capacity_xl=5,
+
+    #                 status=LockerStatusEnum.OK,
+    #                 full_address='Rimi RAF, Jelgava, Latvia'
+    #             )
+    #         )
+    #     self.write("Temp_answer_of_create")
 
 # endregion
 
@@ -80,6 +116,7 @@ async def main_app():
         debug=True,
 
         template_path='templates',
+        static_path="static",
     )
     app.listen(APP_PORT)
     await asyncio.Event().wait()

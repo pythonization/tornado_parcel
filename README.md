@@ -30,3 +30,13 @@ pip install -r requirements.txt
 source .venv/bin/activate
 ./tornado_parcel.py run
 ```
+
+## Translate jsx to js
+
+```bash
+# prepare
+npm install
+
+# see to know, how to launch babel for translating jsx
+# .vscode/tasks.json
+```

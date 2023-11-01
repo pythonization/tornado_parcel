@@ -1,0 +1,37 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Live compile React",
+            "type": "process",
+            "command": "npx",
+            "args": [
+                "babel",
+                "--watch",
+                "static/jsx_src",
+                "--out-dir",
+                "static/jsx_compiled",
+                "--presets",
+                "babel-preset-react-app/${input:react_preset_mode}",
+                // dev
+                "--source-maps=true",
+                "--verbose"
+            ],
+            "problemMatcher": []
+        },
+    ],
+    "inputs": [
+        {
+            "id": "react_preset_mode",
+            "type": "pickString",
+            "description": "Choose Babel React compile mode",
+            "options": [
+                "prod", // faster
+                "dev", // when error or warning occurs and *.development.js files used, in console I will see line number where error occurs
+            ],
+            "default": "dev",
+        }
+    ]
+}

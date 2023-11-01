@@ -4,7 +4,7 @@ import enum
 from typing import List
 
 from sqlalchemy import (
-    ForeignKey, String, Enum,
+    ForeignKey, String, Enum, Column,
     create_engine,
 )
 from sqlalchemy.orm import (
@@ -59,7 +59,12 @@ class Locker(Base):
     capacity_l: Mapped[int]
     capacity_xl: Mapped[int]
 
-    status: Mapped[LockerStatusEnum] = Enum(LockerStatusEnum)
+    # not working like this:
+    # status: Mapped[LockerStatusEnum] = Enum(LockerStatusEnum)
+    status = Column(
+        Enum(LockerStatusEnum)
+    )
+
     full_address: Mapped[str]
 
     parcel_2m: Mapped[List["Parcel"]] = relationship(

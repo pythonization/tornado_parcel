@@ -6,10 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <title>Tornado Parcel</title>
+
+    <link rel="stylesheet" href="{{ static_url('lib/bootstrap/bootstrap.min.css') }}">
 </head>
 
 <body>
-    <h1>Parcels and Lockers</h1>
+    <div id="react_parcel_root" class="container"></div>
+
+    <script src="{{ static_url('lib/bootstrap/bootstrap.bundle.min.js') }}"></script>
+
+    <script src="{{ static_url('lib/react/react.development.js') }}"></script>
+    <script src="{{ static_url('lib/react/react-dom.development.js') }}"></script>
+    <script src="{{ static_url('lib/react/redux.min.js') }}"></script>
+    <script src="{{ static_url('lib/react/redux-toolkit.umd.min.js') }}"></script>
+    <script src="{{ static_url('lib/react/react-redux.min.js') }}"></script>
+
+    <script src="{{ static_url('lib/react/router.umd.min.js') }}"></script>
+    <script src="{{ static_url('lib/react/react-router.production.min.js') }}"></script>
+    <script src="{{ static_url('lib/react/react-router-dom.production.min.js') }}"></script>
+
+    <script src="{{ static_url('jsx_compiled/app.js') }}"></script>
 </body>
 
 </html>
