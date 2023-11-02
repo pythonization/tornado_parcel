@@ -82,23 +82,37 @@ class HandlerLocker(tornado.web.RequestHandler):
                 str(locker_rec.id)
             )
 
-    # def post(self):
-    #     """Create new locker.
-    #     """
-    #     with Session.begin() as session:
-    #         session.add(
-    #             Locker(
-    #                 capacity_xs=20,
-    #                 capacity_s=20,
-    #                 capacity_m=20,
-    #                 capacity_l=10,
-    #                 capacity_xl=5,
+    def put(self):
+        """Update locker.
+        """
+        dict2write = tornado.escape.json_decode(
+            self.request.body
+        )
+        target_id = dict2write['id']
+        del dict2write['id']
 
-    #                 status=LockerStatusEnum.OK,
-    #                 full_address='Rimi RAF, Jelgava, Latvia'
-    #             )
-    #         )
-    #     self.write("Temp_answer_of_create")
+        with Session.begin() as session:
+            locker_rec = session.get(
+                Locker, target_id
+            )
+
+            for field, value in dict2write.items():
+                # this way is safer than update(), see:
+                # https://stackoverflow.com/questions/23152337/how-to-update-sqlalchemy-orm-object-by-a-python-dict
+
+                setattr(locker_rec, field, value)
+
+    def delete(self):
+        """Delete locker.
+        """
+        with Session.begin() as session:
+            session.delete(
+                session.get(
+                    Locker,
+                    int(self.request.body)
+                )
+            )
+
 
 # endregion
 

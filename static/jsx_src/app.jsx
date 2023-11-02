@@ -8,10 +8,24 @@
         Provider,
         useSelector, useDispatch
     } = ReactRedux
-    const { createHashRouter, RouterProvider, Link, useNavigate } = ReactRouterDOM
+    const {
+        createHashRouter,
+        RouterProvider, Link,
+        useNavigate, useParams,
+    } = ReactRouterDOM
 
     const PARCEL_SIZES = ['XS', 'S', 'M', 'L', 'XL',]
     const LOCKER_STATES = ['OK', 'ON_MAINTENANCE', 'FAILED',]
+
+    async function fetch_m2(url, fetch_params, { return_json }) {
+        let result = await fetch(url, fetch_params)
+
+        if (result.status != 200) {
+            throw Error('Wrong status code')
+        }
+
+        return result
+    }
 
     // #region redux
     const fetch_lockers = createAsyncThunk('lockers/fetch_lockers', async () => {
@@ -31,6 +45,21 @@
                 { id: new_rec_id },
                 record_data,
             ),
+            navigate
+        ]
+    })
+    const update_locker = createAsyncThunk('lockers/update_locker', async ([record_data, navigate]) => {
+        await fetch_m2(
+            "/api/locker",
+            {
+                method: "PUT",
+                body: JSON.stringify(record_data),
+            },
+            {}
+        )
+
+        return [
+            record_data,
             navigate
         ]
     })
@@ -59,7 +88,17 @@
                     state.status = 'succeeded'
                     locker_adapter.upsertMany(state, action.payload)
                 })
-                .addCase(add_new_locker.fulfilled, locker_adapter.removeOne)
+                .addCase(add_new_locker.fulfilled, (state, action) => {
+                    const [rec_with_id, navigate] = action.payload;
+                    locker_adapter.addOne(state, rec_with_id)
+                    navigate('/lockers')
+                })
+                .addCase(update_locker.fulfilled, (state, action) => {
+                    const [locker_r, navigate] = action.payload;
+                    locker_adapter.setOne(state, locker_r)
+                    navigate('/lockers')
+                })
+                .addCase(delete_locker.fulfilled, locker_adapter.removeOne)
         }
     })
 
@@ -143,12 +182,12 @@
                                     <td>{locker_r.capacity_xl}</td>
                                     <td>{locker_r.status}</td>
                                     <td>
-                                        <Link to="/" className="btn btn-primary" role="button">
+                                        <Link to={`/lockers/edit/${locker_r.id}`} className="btn btn-primary" role="button">
                                             Edit
                                         </Link>
                                         &nbsp;
                                         <button
-                                            type="button" class="btn btn-danger"
+                                            type="button" className="btn btn-danger"
                                             onClick={e => dispatch(
                                                 delete_locker(locker_r.id)
                                             )}
@@ -168,36 +207,34 @@
             </>
         )
     }
-    function LockersAdd() {
+    function LockersForm({
+        initial_values,
+        create_ok_bt_action,
+        header_txt, save_bt_txt,
+    }) {
         const dispatch = useDispatch()
-        const navigate = useNavigate()
 
-        const [lockerAddress, setLockerAddress] = useState('');
+        const [lockerAddress, setLockerAddress] = useState(initial_values.full_address);
 
-        const [lockerCapacityXS, setLockerCapacityXS] = useState(0);
-        const [lockerCapacityS, setLockerCapacityS] = useState(0);
-        const [lockerCapacityM, setLockerCapacityM] = useState(0);
-        const [lockerCapacityL, setLockerCapacityL] = useState(0);
-        const [lockerCapacityXL, setLockerCapacityXL] = useState(0);
+        const [lockerCapacityXS, setLockerCapacityXS] = useState(initial_values.capacity_xs);
+        const [lockerCapacityS, setLockerCapacityS] = useState(initial_values.capacity_s);
+        const [lockerCapacityM, setLockerCapacityM] = useState(initial_values.capacity_m);
+        const [lockerCapacityL, setLockerCapacityL] = useState(initial_values.capacity_l);
+        const [lockerCapacityXL, setLockerCapacityXL] = useState(initial_values.capacity_xl);
 
-        const [lockerState, setLockerState] = useState('ON_MAINTENANCE');
+        const [lockerState, setLockerState] = useState(initial_values.status);
 
         function ok_click() {
             dispatch(
-                add_new_locker(
-                    [
-                        {
-                            full_address: lockerAddress,
-                            capacity_xs: lockerCapacityXS,
-                            capacity_s: lockerCapacityS,
-                            capacity_m: lockerCapacityM,
-                            capacity_l: lockerCapacityL,
-                            capacity_xl: lockerCapacityXL,
-                            status: lockerState,
-                        },
-                        navigate
-                    ]
-                )
+                create_ok_bt_action({
+                    full_address: lockerAddress,
+                    capacity_xs: lockerCapacityXS,
+                    capacity_s: lockerCapacityS,
+                    capacity_m: lockerCapacityM,
+                    capacity_l: lockerCapacityL,
+                    capacity_xl: lockerCapacityXL,
+                    status: lockerState,
+                })
             )
         }
 
@@ -205,7 +242,9 @@
             <>
                 <div className="row">
                     <div className="col">
-                        <h2>Add Locker</h2>
+                        <h2>
+                            {header_txt}
+                        </h2>
                     </div>
                 </div>
                 <form>
@@ -285,10 +324,56 @@
                     <button
                         type="button" className="btn btn-primary" onClick={ok_click}
                     >
-                        Create
+                        {save_bt_txt}
                     </button>
                 </form>
             </>
+        )
+    }
+    function LockersAdd() {
+        const navigate = useNavigate()
+
+        const initial_values = {
+            full_address: '',
+            capacity_xs: 0,
+            capacity_s: 0,
+            capacity_m: 0,
+            capacity_l: 0,
+            capacity_xl: 0,
+            status: 'ON_MAINTENANCE',
+        }
+        function create_ok_bt_action(values) {
+            return add_new_locker(
+                [values, navigate]
+            )
+        }
+
+        return (
+            <LockersForm
+                initial_values={initial_values}
+                create_ok_bt_action={create_ok_bt_action}
+                header_txt="Add Locker" save_bt_txt="Create"
+            />
+        )
+    }
+    function LockersEdit() {
+        const navigate = useNavigate()
+        const { locker_id } = useParams();
+
+        const initial_values = useSelector(state => select_locker_by_id(state, locker_id))
+        function create_ok_bt_action(values) {
+            values.id = locker_id
+            return update_locker(
+                [values, navigate]
+            )
+        }
+
+        return (
+            <LockersForm
+                initial_values={initial_values}
+                create_ok_bt_action={create_ok_bt_action}
+                header_txt="Edit Locker" save_bt_txt="Update"
+            />
         )
     }
     // #endregion
@@ -306,6 +391,10 @@
         {
             path: "lockers/add",
             element: <LockersAdd />,
+        },
+        {
+            path: "lockers/edit/:locker_id",
+            element: <LockersEdit />,
         },
 
         {

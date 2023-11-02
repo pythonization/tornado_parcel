@@ -27,11 +27,39 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     createHashRouter = _ReactRouterDOM.createHashRouter,
     RouterProvider = _ReactRouterDOM.RouterProvider,
     Link = _ReactRouterDOM.Link,
-    useNavigate = _ReactRouterDOM.useNavigate;
+    useNavigate = _ReactRouterDOM.useNavigate,
+    useParams = _ReactRouterDOM.useParams;
   var PARCEL_SIZES = ['XS', 'S', 'M', 'L', 'XL'];
   var LOCKER_STATES = ['OK', 'ON_MAINTENANCE', 'FAILED'];
-
-  // #region redux
+  function fetch_m2(_x, _x2, _x3) {
+    return _fetch_m.apply(this, arguments);
+  } // #region redux
+  function _fetch_m() {
+    _fetch_m = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(url, fetch_params, _ref) {
+      var return_json, result;
+      return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+        while (1) switch (_context5.prev = _context5.next) {
+          case 0:
+            return_json = _ref.return_json;
+            _context5.next = 3;
+            return fetch(url, fetch_params);
+          case 3:
+            result = _context5.sent;
+            if (!(result.status != 200)) {
+              _context5.next = 6;
+              break;
+            }
+            throw Error('Wrong status code');
+          case 6:
+            return _context5.abrupt("return", result);
+          case 7:
+          case "end":
+            return _context5.stop();
+        }
+      }, _callee5);
+    }));
+    return _fetch_m.apply(this, arguments);
+  }
   var fetch_lockers = createAsyncThunk('lockers/fetch_lockers', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
     var record_l;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
@@ -51,12 +79,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     }, _callee);
   })));
   var add_new_locker = createAsyncThunk('lockers/add_1_locker', /*#__PURE__*/function () {
-    var _ref3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(_ref2) {
-      var _ref4, record_data, navigate, new_rec_id;
+    var _ref4 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee2(_ref3) {
+      var _ref5, record_data, navigate, new_rec_id;
       return _regeneratorRuntime().wrap(function _callee2$(_context2) {
         while (1) switch (_context2.prev = _context2.next) {
           case 0:
-            _ref4 = _slicedToArray(_ref2, 2), record_data = _ref4[0], navigate = _ref4[1];
+            _ref5 = _slicedToArray(_ref3, 2), record_data = _ref5[0], navigate = _ref5[1];
             _context2.next = 3;
             return fetch("/api/locker", {
               method: "POST",
@@ -75,30 +103,54 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         }
       }, _callee2);
     }));
-    return function (_x) {
-      return _ref3.apply(this, arguments);
+    return function (_x4) {
+      return _ref4.apply(this, arguments);
     };
   }());
-  var delete_locker = createAsyncThunk('lockers/delete_locker', /*#__PURE__*/function () {
-    var _ref5 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(record_id) {
+  var update_locker = createAsyncThunk('lockers/update_locker', /*#__PURE__*/function () {
+    var _ref7 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee3(_ref6) {
+      var _ref8, record_data, navigate;
       return _regeneratorRuntime().wrap(function _callee3$(_context3) {
         while (1) switch (_context3.prev = _context3.next) {
           case 0:
-            _context3.next = 2;
-            return fetch("/api/locker", {
-              method: "DELETE",
-              body: JSON.stringify(record_id)
-            });
-          case 2:
-            return _context3.abrupt("return", record_id);
+            _ref8 = _slicedToArray(_ref6, 2), record_data = _ref8[0], navigate = _ref8[1];
+            _context3.next = 3;
+            return fetch_m2("/api/locker", {
+              method: "PUT",
+              body: JSON.stringify(record_data)
+            }, {});
           case 3:
+            return _context3.abrupt("return", [record_data, navigate]);
+          case 4:
           case "end":
             return _context3.stop();
         }
       }, _callee3);
     }));
-    return function (_x2) {
-      return _ref5.apply(this, arguments);
+    return function (_x5) {
+      return _ref7.apply(this, arguments);
+    };
+  }());
+  var delete_locker = createAsyncThunk('lockers/delete_locker', /*#__PURE__*/function () {
+    var _ref9 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee4(record_id) {
+      return _regeneratorRuntime().wrap(function _callee4$(_context4) {
+        while (1) switch (_context4.prev = _context4.next) {
+          case 0:
+            _context4.next = 2;
+            return fetch("/api/locker", {
+              method: "DELETE",
+              body: JSON.stringify(record_id)
+            });
+          case 2:
+            return _context4.abrupt("return", record_id);
+          case 3:
+          case "end":
+            return _context4.stop();
+        }
+      }, _callee4);
+    }));
+    return function (_x6) {
+      return _ref9.apply(this, arguments);
     };
   }());
   var locker_adapter = createEntityAdapter();
@@ -114,7 +166,19 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       builder.addCase(fetch_lockers.fulfilled, function (state, action) {
         state.status = 'succeeded';
         locker_adapter.upsertMany(state, action.payload);
-      }).addCase(add_new_locker.fulfilled, locker_adapter.removeOne);
+      }).addCase(add_new_locker.fulfilled, function (state, action) {
+        var _action$payload = _slicedToArray(action.payload, 2),
+          rec_with_id = _action$payload[0],
+          navigate = _action$payload[1];
+        locker_adapter.addOne(state, rec_with_id);
+        navigate('/lockers');
+      }).addCase(update_locker.fulfilled, function (state, action) {
+        var _action$payload2 = _slicedToArray(action.payload, 2),
+          locker_r = _action$payload2[0],
+          navigate = _action$payload2[1];
+        locker_adapter.setOne(state, locker_r);
+        navigate('/lockers');
+      }).addCase(delete_locker.fulfilled, locker_adapter.removeOne);
     }
   });
   var _locker_adapter$getSe = locker_adapter.getSelectors(function (state) {
@@ -135,7 +199,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 81,
+      lineNumber: 120,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -143,7 +207,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 82,
+      lineNumber: 121,
       columnNumber: 13
     }
   }, /*#__PURE__*/React.createElement(Link, {
@@ -153,7 +217,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 83,
+      lineNumber: 122,
       columnNumber: 17
     }
   }, "View Lockers"), "\xA0", /*#__PURE__*/React.createElement(Link, {
@@ -163,7 +227,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 87,
+      lineNumber: 126,
       columnNumber: 17
     }
   }, "View Parcels")));
@@ -184,7 +248,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 108,
+        lineNumber: 147,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -192,7 +256,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 109,
+        lineNumber: 148,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement(Link, {
@@ -202,7 +266,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 110,
+        lineNumber: 149,
         columnNumber: 25
       }
     }, "Home"))), /*#__PURE__*/React.createElement("div", {
@@ -210,7 +274,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 115,
+        lineNumber: 154,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -218,14 +282,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 116,
+        lineNumber: 155,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("h2", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 117,
+        lineNumber: 156,
         columnNumber: 25
       }
     }, "Lockers"))), /*#__PURE__*/React.createElement("table", {
@@ -233,84 +297,84 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 121,
+        lineNumber: 160,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("thead", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 122,
+        lineNumber: 161,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("tr", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 123,
+        lineNumber: 162,
         columnNumber: 25
       }
     }, /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 124,
+        lineNumber: 163,
         columnNumber: 29
       }
     }, "Full Address"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 125,
+        lineNumber: 164,
         columnNumber: 29
       }
     }, "Capacity XS"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 126,
+        lineNumber: 165,
         columnNumber: 29
       }
     }, "Capacity S"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 127,
+        lineNumber: 166,
         columnNumber: 29
       }
     }, "Capacity M"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 128,
+        lineNumber: 167,
         columnNumber: 29
       }
     }, "Capacity L"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 129,
+        lineNumber: 168,
         columnNumber: 29
       }
     }, "Capacity XL"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 130,
+        lineNumber: 169,
         columnNumber: 29
       }
     }, "Status"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 131,
+        lineNumber: 170,
         columnNumber: 29
       }
     }))), /*#__PURE__*/React.createElement("tbody", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 134,
+        lineNumber: 173,
         columnNumber: 21
       }
     }, lockers_list.map(function (locker_r) {
@@ -319,85 +383,85 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 137,
+          lineNumber: 176,
           columnNumber: 33
         }
       }, /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 138,
+          lineNumber: 177,
           columnNumber: 37
         }
       }, locker_r.full_address), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 139,
+          lineNumber: 178,
           columnNumber: 37
         }
       }, locker_r.capacity_xs), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 140,
+          lineNumber: 179,
           columnNumber: 37
         }
       }, locker_r.capacity_s), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 141,
+          lineNumber: 180,
           columnNumber: 37
         }
       }, locker_r.capacity_m), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 142,
+          lineNumber: 181,
           columnNumber: 37
         }
       }, locker_r.capacity_l), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 143,
+          lineNumber: 182,
           columnNumber: 37
         }
       }, locker_r.capacity_xl), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 144,
+          lineNumber: 183,
           columnNumber: 37
         }
       }, locker_r.status), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 145,
+          lineNumber: 184,
           columnNumber: 37
         }
       }, /*#__PURE__*/React.createElement(Link, {
-        to: "/",
+        to: "/lockers/edit/".concat(locker_r.id),
         className: "btn btn-primary",
         role: "button",
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 146,
+          lineNumber: 185,
           columnNumber: 41
         }
       }, "Edit"), "\xA0", /*#__PURE__*/React.createElement("button", {
         type: "button",
-        "class": "btn btn-danger",
+        className: "btn btn-danger",
         onClick: function onClick(e) {
           return dispatch(delete_locker(locker_r.id));
         },
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 150,
+          lineNumber: 189,
           columnNumber: 41
         }
       }, "Delete")));
@@ -408,45 +472,48 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 165,
+        lineNumber: 204,
         columnNumber: 17
       }
     }, "Add Locker"));
   }
-  function LockersAdd() {
+  function LockersForm(_ref10) {
     var _this2 = this;
+    var initial_values = _ref10.initial_values,
+      create_ok_bt_action = _ref10.create_ok_bt_action,
+      header_txt = _ref10.header_txt,
+      save_bt_txt = _ref10.save_bt_txt;
     var dispatch = useDispatch();
-    var navigate = useNavigate();
-    var _useState = useState(''),
+    var _useState = useState(initial_values.full_address),
       _useState2 = _slicedToArray(_useState, 2),
       lockerAddress = _useState2[0],
       setLockerAddress = _useState2[1];
-    var _useState3 = useState(0),
+    var _useState3 = useState(initial_values.capacity_xs),
       _useState4 = _slicedToArray(_useState3, 2),
       lockerCapacityXS = _useState4[0],
       setLockerCapacityXS = _useState4[1];
-    var _useState5 = useState(0),
+    var _useState5 = useState(initial_values.capacity_s),
       _useState6 = _slicedToArray(_useState5, 2),
       lockerCapacityS = _useState6[0],
       setLockerCapacityS = _useState6[1];
-    var _useState7 = useState(0),
+    var _useState7 = useState(initial_values.capacity_m),
       _useState8 = _slicedToArray(_useState7, 2),
       lockerCapacityM = _useState8[0],
       setLockerCapacityM = _useState8[1];
-    var _useState9 = useState(0),
+    var _useState9 = useState(initial_values.capacity_l),
       _useState10 = _slicedToArray(_useState9, 2),
       lockerCapacityL = _useState10[0],
       setLockerCapacityL = _useState10[1];
-    var _useState11 = useState(0),
+    var _useState11 = useState(initial_values.capacity_xl),
       _useState12 = _slicedToArray(_useState11, 2),
       lockerCapacityXL = _useState12[0],
       setLockerCapacityXL = _useState12[1];
-    var _useState13 = useState('ON_MAINTENANCE'),
+    var _useState13 = useState(initial_values.status),
       _useState14 = _slicedToArray(_useState13, 2),
       lockerState = _useState14[0],
       setLockerState = _useState14[1];
     function ok_click() {
-      dispatch(add_new_locker([{
+      dispatch(create_ok_bt_action({
         full_address: lockerAddress,
         capacity_xs: lockerCapacityXS,
         capacity_s: lockerCapacityS,
@@ -454,14 +521,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         capacity_l: lockerCapacityL,
         capacity_xl: lockerCapacityXL,
         status: lockerState
-      }, navigate]));
+      }));
     }
     return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "row",
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 206,
+        lineNumber: 243,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -469,21 +536,21 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 207,
+        lineNumber: 244,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("h2", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 208,
+        lineNumber: 245,
         columnNumber: 25
       }
-    }, "Add Locker"))), /*#__PURE__*/React.createElement("form", {
+    }, header_txt))), /*#__PURE__*/React.createElement("form", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 211,
+        lineNumber: 250,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -491,7 +558,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 212,
+        lineNumber: 251,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -500,7 +567,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 213,
+        lineNumber: 252,
         columnNumber: 25
       }
     }, "Full Address"), /*#__PURE__*/React.createElement("input", {
@@ -513,7 +580,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 216,
+        lineNumber: 255,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -521,7 +588,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 221,
+        lineNumber: 260,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -530,7 +597,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 222,
+        lineNumber: 261,
         columnNumber: 25
       }
     }, "Capacity XS"), /*#__PURE__*/React.createElement("input", {
@@ -544,7 +611,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 225,
+        lineNumber: 264,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -552,7 +619,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 231,
+        lineNumber: 270,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -561,7 +628,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 232,
+        lineNumber: 271,
         columnNumber: 25
       }
     }, "Capacity S"), /*#__PURE__*/React.createElement("input", {
@@ -575,7 +642,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 235,
+        lineNumber: 274,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -583,7 +650,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 240,
+        lineNumber: 279,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -592,7 +659,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 241,
+        lineNumber: 280,
         columnNumber: 25
       }
     }, "Capacity M"), /*#__PURE__*/React.createElement("input", {
@@ -606,7 +673,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 244,
+        lineNumber: 283,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -614,7 +681,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 249,
+        lineNumber: 288,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -623,7 +690,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 250,
+        lineNumber: 289,
         columnNumber: 25
       }
     }, "Capacity L"), /*#__PURE__*/React.createElement("input", {
@@ -637,7 +704,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 253,
+        lineNumber: 292,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -645,7 +712,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 258,
+        lineNumber: 297,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -654,7 +721,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 259,
+        lineNumber: 298,
         columnNumber: 25
       }
     }, "Capacity XL"), /*#__PURE__*/React.createElement("input", {
@@ -668,7 +735,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 262,
+        lineNumber: 301,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -676,7 +743,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 268,
+        lineNumber: 307,
         columnNumber: 21
       }
     }, "State", /*#__PURE__*/React.createElement("select", {
@@ -689,7 +756,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 270,
+        lineNumber: 309,
         columnNumber: 25
       }
     }, LOCKER_STATES.map(function (code) {
@@ -699,7 +766,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         __self: _this2,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 273,
+          lineNumber: 312,
           columnNumber: 37
         }
       }, code);
@@ -710,7 +777,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 281,
+        lineNumber: 320,
         columnNumber: 21
       }
     }, "Cancel"), "\xA0", /*#__PURE__*/React.createElement("button", {
@@ -720,10 +787,61 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 285,
+        lineNumber: 324,
         columnNumber: 21
       }
-    }, "Create")));
+    }, save_bt_txt)));
+  }
+  function LockersAdd() {
+    var navigate = useNavigate();
+    var initial_values = {
+      full_address: '',
+      capacity_xs: 0,
+      capacity_s: 0,
+      capacity_m: 0,
+      capacity_l: 0,
+      capacity_xl: 0,
+      status: 'ON_MAINTENANCE'
+    };
+    function create_ok_bt_action(values) {
+      return add_new_locker([values, navigate]);
+    }
+    return /*#__PURE__*/React.createElement(LockersForm, {
+      initial_values: initial_values,
+      create_ok_bt_action: create_ok_bt_action,
+      header_txt: "Add Locker",
+      save_bt_txt: "Create",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 352,
+        columnNumber: 13
+      }
+    });
+  }
+  function LockersEdit() {
+    var navigate = useNavigate();
+    var _useParams = useParams(),
+      locker_id = _useParams.locker_id;
+    var initial_values = useSelector(function (state) {
+      return select_locker_by_id(state, locker_id);
+    });
+    function create_ok_bt_action(values) {
+      values.id = locker_id;
+      return update_locker([values, navigate]);
+    }
+    return /*#__PURE__*/React.createElement(LockersForm, {
+      initial_values: initial_values,
+      create_ok_bt_action: create_ok_bt_action,
+      header_txt: "Edit Locker",
+      save_bt_txt: "Update",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 372,
+        columnNumber: 13
+      }
+    });
   }
   // #endregion
 
@@ -736,7 +854,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 304,
+        lineNumber: 389,
         columnNumber: 22
       }
     })
@@ -746,7 +864,17 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 308,
+        lineNumber: 393,
+        columnNumber: 22
+      }
+    })
+  }, {
+    path: "lockers/edit/:locker_id",
+    element: /*#__PURE__*/React.createElement(LockersEdit, {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 397,
         columnNumber: 22
       }
     })
@@ -756,7 +884,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 313,
+        lineNumber: 402,
         columnNumber: 22
       }
     }, "Hello par! ", /*#__PURE__*/React.createElement(Link, {
@@ -764,7 +892,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 313,
+        lineNumber: 402,
         columnNumber: 38
       }
     }, "home"), " ")
@@ -773,14 +901,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 320,
+      lineNumber: 409,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("h1", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 321,
+      lineNumber: 410,
       columnNumber: 13
     }
   }, "Tornado Parcel"), /*#__PURE__*/React.createElement(Provider, {
@@ -788,7 +916,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 323,
+      lineNumber: 412,
       columnNumber: 13
     }
   }, /*#__PURE__*/React.createElement(RouterProvider, {
@@ -796,7 +924,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 324,
+      lineNumber: 413,
       columnNumber: 17
     }
   }))));

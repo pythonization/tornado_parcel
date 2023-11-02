@@ -68,7 +68,10 @@ class Locker(Base):
     full_address: Mapped[str]
 
     parcel_2m: Mapped[List["Parcel"]] = relationship(
-        back_populates="locker_now_2o", cascade="all, delete-orphan"
+        back_populates="locker_now_2o",
+
+        # better do not delete parcels automatically
+        # cascade="all, delete-orphan"
     )
 
 
@@ -104,7 +107,10 @@ class Parcel(Base):
 
     size: Mapped[SizeEnum] = Enum(SizeEnum)
 
-    locker_now_id: Mapped[int] = mapped_column(ForeignKey("parcel_locker.id"))
+    locker_now_id: Mapped[int] = mapped_column(
+        ForeignKey("parcel_locker.id"),
+        nullable=False
+    )
     locker_now_2o: Mapped["Locker"] = relationship(back_populates="parcel_2m")
 
 
