@@ -125,13 +125,15 @@ class HandlerParcel(tornado.web.RequestHandler):
             )
             session.add(parcel_rec)
 
-            # commit now to get ID of record
-            session.commit()
-
+            # need flush and expire before check
+            session.flush()
+            session.expire_all()
             check_parcel_total(
                 parcel_rec
             )
 
+            # commit now to get ID of record
+            session.commit()
             self.write(
                 str(parcel_rec.id)
             )
@@ -146,7 +148,7 @@ class HandlerParcel(tornado.web.RequestHandler):
         target_id = dict2write['id']
         del dict2write['id']
 
-        with Session() as session:
+        with Session.begin() as session:
             parcel_rec = session.get(
                 Parcel, target_id
             )
@@ -157,8 +159,9 @@ class HandlerParcel(tornado.web.RequestHandler):
 
                 setattr(parcel_rec, field, value)
 
-            session.commit()
-
+            # need flush and expire before check
+            session.flush()
+            session.expire_all()
             check_parcel_total(
                 parcel_rec
             )

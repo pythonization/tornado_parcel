@@ -40,3 +40,9 @@ npm install
 # see to know, how to launch babel for translating jsx
 # .vscode/tasks.json
 ```
+
+## Useful links
+
++ [Tornado Web Server](https://www.tornadoweb.org/)
++ [SQLAlchemy](https://www.sqlalchemy.org/)
++ [React Router](https://reactrouter.com/en/main/start/tutorial)
