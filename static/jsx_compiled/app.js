@@ -35,39 +35,67 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     return _fetch_m.apply(this, arguments);
   } // #region redux
   function _fetch_m() {
-    _fetch_m = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5(url, fetch_params, _ref) {
+    _fetch_m = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee9(url, fetch_params, _ref) {
       var return_json, result;
-      return _regeneratorRuntime().wrap(function _callee5$(_context5) {
-        while (1) switch (_context5.prev = _context5.next) {
+      return _regeneratorRuntime().wrap(function _callee9$(_context9) {
+        while (1) switch (_context9.prev = _context9.next) {
           case 0:
             return_json = _ref.return_json;
-            _context5.next = 3;
+            _context9.next = 3;
             return fetch(url, fetch_params);
           case 3:
-            result = _context5.sent;
-            if (!(result.status != 200)) {
-              _context5.next = 6;
+            result = _context9.sent;
+            if (!(result.status == 400)) {
+              _context9.next = 10;
               break;
             }
-            throw Error('Wrong status code');
-          case 6:
-            return _context5.abrupt("return", result);
-          case 7:
+            _context9.t0 = Error;
+            _context9.next = 8;
+            return result.text();
+          case 8:
+            _context9.t1 = _context9.sent;
+            throw (0, _context9.t0)(_context9.t1);
+          case 10:
+            if (!(result.status != 200)) {
+              _context9.next = 12;
+              break;
+            }
+            throw Error('Wrong status code (and this is not validation error)');
+          case 12:
+            if (!return_json) {
+              _context9.next = 16;
+              break;
+            }
+            _context9.next = 15;
+            return result.json();
+          case 15:
+            result = _context9.sent;
+          case 16:
+            return _context9.abrupt("return", result);
+          case 17:
           case "end":
-            return _context5.stop();
+            return _context9.stop();
         }
-      }, _callee5);
+      }, _callee9);
     }));
     return _fetch_m.apply(this, arguments);
   }
+  function set_error_msg(state, action) {
+    state.error = action.error.message;
+  }
+  function alert_error(state, action) {
+    alert(action.error.message);
+  }
+
+  // #region lockers
   var fetch_lockers = createAsyncThunk('lockers/fetch_lockers', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee() {
     var record_l;
     return _regeneratorRuntime().wrap(function _callee$(_context) {
       while (1) switch (_context.prev = _context.next) {
         case 0:
           _context.next = 2;
-          return fetch("/api/locker").then(function (res) {
-            return res.json();
+          return fetch_m2("/api/locker", {}, {
+            return_json: true
           });
         case 2:
           record_l = _context.sent;
@@ -86,11 +114,11 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           case 0:
             _ref5 = _slicedToArray(_ref3, 2), record_data = _ref5[0], navigate = _ref5[1];
             _context2.next = 3;
-            return fetch("/api/locker", {
+            return fetch_m2("/api/locker", {
               method: "POST",
               body: JSON.stringify(record_data)
-            }).then(function (res) {
-              return res.json();
+            }, {
+              return_json: true
             });
           case 3:
             new_rec_id = _context2.sent;
@@ -137,10 +165,10 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         while (1) switch (_context4.prev = _context4.next) {
           case 0:
             _context4.next = 2;
-            return fetch("/api/locker", {
+            return fetch_m2("/api/locker", {
               method: "DELETE",
               body: JSON.stringify(record_id)
-            });
+            }, {});
           case 2:
             return _context4.abrupt("return", record_id);
           case 3:
@@ -157,10 +185,9 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
   var locker_slice = createSlice({
     name: 'lockers',
     initialState: locker_adapter.getInitialState({
-      status: 'idle'
-      // error: null
+      status: 'idle',
+      error: null
     }),
-
     reducers: {},
     extraReducers: function extraReducers(builder) {
       builder.addCase(fetch_lockers.fulfilled, function (state, action) {
@@ -178,7 +205,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
           navigate = _action$payload2[1];
         locker_adapter.setOne(state, locker_r);
         navigate('/lockers');
-      }).addCase(delete_locker.fulfilled, locker_adapter.removeOne);
+      }).addCase(delete_locker.fulfilled, locker_adapter.removeOne).addCase(add_new_locker.rejected, set_error_msg).addCase(update_locker.rejected, set_error_msg).addCase(delete_locker.rejected, alert_error);
     }
   });
   var _locker_adapter$getSe = locker_adapter.getSelectors(function (state) {
@@ -186,9 +213,142 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     }),
     select_all_lockers = _locker_adapter$getSe.selectAll,
     select_locker_by_id = _locker_adapter$getSe.selectById;
+  // #endregion
+
+  // #region parcel
+  var fetch_parcels = createAsyncThunk('parcels/fetch_parcels', /*#__PURE__*/_asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee5() {
+    var record_l;
+    return _regeneratorRuntime().wrap(function _callee5$(_context5) {
+      while (1) switch (_context5.prev = _context5.next) {
+        case 0:
+          _context5.next = 2;
+          return fetch_m2("/api/parcel", {}, {
+            return_json: true
+          });
+        case 2:
+          record_l = _context5.sent;
+          return _context5.abrupt("return", record_l);
+        case 4:
+        case "end":
+          return _context5.stop();
+      }
+    }, _callee5);
+  })));
+  var add_new_parcel = createAsyncThunk('parcels/add_1_parcel', /*#__PURE__*/function () {
+    var _ref12 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee6(_ref11) {
+      var _ref13, record_data, navigate, new_rec_id;
+      return _regeneratorRuntime().wrap(function _callee6$(_context6) {
+        while (1) switch (_context6.prev = _context6.next) {
+          case 0:
+            _ref13 = _slicedToArray(_ref11, 2), record_data = _ref13[0], navigate = _ref13[1];
+            _context6.next = 3;
+            return fetch_m2("/api/parcel", {
+              method: "POST",
+              body: JSON.stringify(record_data)
+            }, {
+              return_json: true
+            });
+          case 3:
+            new_rec_id = _context6.sent;
+            return _context6.abrupt("return", [Object.assign({
+              id: new_rec_id
+            }, record_data), navigate]);
+          case 5:
+          case "end":
+            return _context6.stop();
+        }
+      }, _callee6);
+    }));
+    return function (_x7) {
+      return _ref12.apply(this, arguments);
+    };
+  }());
+  var update_parcel = createAsyncThunk('parcels/update_parcel', /*#__PURE__*/function () {
+    var _ref15 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee7(_ref14) {
+      var _ref16, record_data, navigate;
+      return _regeneratorRuntime().wrap(function _callee7$(_context7) {
+        while (1) switch (_context7.prev = _context7.next) {
+          case 0:
+            _ref16 = _slicedToArray(_ref14, 2), record_data = _ref16[0], navigate = _ref16[1];
+            _context7.next = 3;
+            return fetch_m2("/api/parcel", {
+              method: "PUT",
+              body: JSON.stringify(record_data)
+            }, {});
+          case 3:
+            return _context7.abrupt("return", [record_data, navigate]);
+          case 4:
+          case "end":
+            return _context7.stop();
+        }
+      }, _callee7);
+    }));
+    return function (_x8) {
+      return _ref15.apply(this, arguments);
+    };
+  }());
+  var delete_parcel = createAsyncThunk('parcels/delete_parcel', /*#__PURE__*/function () {
+    var _ref17 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime().mark(function _callee8(record_id) {
+      return _regeneratorRuntime().wrap(function _callee8$(_context8) {
+        while (1) switch (_context8.prev = _context8.next) {
+          case 0:
+            _context8.next = 2;
+            return fetch_m2("/api/parcel", {
+              method: "DELETE",
+              body: JSON.stringify(record_id)
+            }, {});
+          case 2:
+            return _context8.abrupt("return", record_id);
+          case 3:
+          case "end":
+            return _context8.stop();
+        }
+      }, _callee8);
+    }));
+    return function (_x9) {
+      return _ref17.apply(this, arguments);
+    };
+  }());
+  var parcel_adapter = createEntityAdapter();
+  var parcel_slice = createSlice({
+    name: 'parcels',
+    initialState: parcel_adapter.getInitialState({
+      status: 'idle',
+      error: null
+    }),
+    reducers: {},
+    extraReducers: function extraReducers(builder) {
+      builder.addCase(fetch_parcels.fulfilled, function (state, action) {
+        state.status = 'succeeded';
+        parcel_adapter.upsertMany(state, action.payload);
+      }).addCase(add_new_parcel.fulfilled, function (state, action) {
+        state.error = null;
+        var _action$payload3 = _slicedToArray(action.payload, 2),
+          rec_with_id = _action$payload3[0],
+          navigate = _action$payload3[1];
+        parcel_adapter.addOne(state, rec_with_id);
+        navigate('/parcels');
+      }).addCase(update_parcel.fulfilled, function (state, action) {
+        state.error = null;
+        var _action$payload4 = _slicedToArray(action.payload, 2),
+          parcel_r = _action$payload4[0],
+          navigate = _action$payload4[1];
+        parcel_adapter.setOne(state, parcel_r);
+        navigate('/parcels');
+      }).addCase(delete_parcel.fulfilled, parcel_adapter.removeOne).addCase(add_new_parcel.rejected, set_error_msg).addCase(update_parcel.rejected, set_error_msg).addCase(delete_parcel.rejected, alert_error);
+    }
+  });
+  var _parcel_adapter$getSe = parcel_adapter.getSelectors(function (state) {
+      return state.parcels;
+    }),
+    select_all_parcels = _parcel_adapter$getSe.selectAll,
+    select_parcel_by_id = _parcel_adapter$getSe.selectById;
+  // #endregion
+
   var store = configureStore({
     reducer: {
-      lockers: locker_slice.reducer
+      lockers: locker_slice.reducer,
+      parcels: parcel_slice.reducer
     }
   });
   // #endregion
@@ -199,7 +359,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 120,
+      lineNumber: 244,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("div", {
@@ -207,7 +367,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 121,
+      lineNumber: 245,
       columnNumber: 13
     }
   }, /*#__PURE__*/React.createElement(Link, {
@@ -217,7 +377,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 122,
+      lineNumber: 246,
       columnNumber: 17
     }
   }, "View Lockers"), "\xA0", /*#__PURE__*/React.createElement(Link, {
@@ -227,10 +387,12 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 126,
+      lineNumber: 250,
       columnNumber: 17
     }
   }, "View Parcels")));
+
+  // #region lockers
   function LockersList() {
     var _this = this;
     var dispatch = useDispatch();
@@ -248,7 +410,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 147,
+        lineNumber: 272,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -256,7 +418,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 148,
+        lineNumber: 273,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement(Link, {
@@ -266,7 +428,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 149,
+        lineNumber: 274,
         columnNumber: 25
       }
     }, "Home"))), /*#__PURE__*/React.createElement("div", {
@@ -274,7 +436,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 154,
+        lineNumber: 279,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -282,14 +444,14 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 155,
+        lineNumber: 280,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("h2", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 156,
+        lineNumber: 281,
         columnNumber: 25
       }
     }, "Lockers"))), /*#__PURE__*/React.createElement("table", {
@@ -297,84 +459,84 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 160,
+        lineNumber: 285,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("thead", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 161,
+        lineNumber: 286,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("tr", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 162,
+        lineNumber: 287,
         columnNumber: 25
       }
     }, /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 163,
+        lineNumber: 288,
         columnNumber: 29
       }
     }, "Full Address"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 164,
+        lineNumber: 289,
         columnNumber: 29
       }
     }, "Capacity XS"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 165,
+        lineNumber: 290,
         columnNumber: 29
       }
     }, "Capacity S"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 166,
+        lineNumber: 291,
         columnNumber: 29
       }
     }, "Capacity M"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 167,
+        lineNumber: 292,
         columnNumber: 29
       }
     }, "Capacity L"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 168,
+        lineNumber: 293,
         columnNumber: 29
       }
     }, "Capacity XL"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 169,
+        lineNumber: 294,
         columnNumber: 29
       }
     }, "Status"), /*#__PURE__*/React.createElement("th", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 170,
+        lineNumber: 295,
         columnNumber: 29
       }
     }))), /*#__PURE__*/React.createElement("tbody", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 173,
+        lineNumber: 298,
         columnNumber: 21
       }
     }, lockers_list.map(function (locker_r) {
@@ -383,63 +545,63 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 176,
+          lineNumber: 301,
           columnNumber: 33
         }
       }, /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 177,
+          lineNumber: 302,
           columnNumber: 37
         }
       }, locker_r.full_address), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 178,
+          lineNumber: 303,
           columnNumber: 37
         }
       }, locker_r.capacity_xs), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 179,
+          lineNumber: 304,
           columnNumber: 37
         }
       }, locker_r.capacity_s), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 180,
+          lineNumber: 305,
           columnNumber: 37
         }
       }, locker_r.capacity_m), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 181,
+          lineNumber: 306,
           columnNumber: 37
         }
       }, locker_r.capacity_l), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 182,
+          lineNumber: 307,
           columnNumber: 37
         }
       }, locker_r.capacity_xl), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 183,
+          lineNumber: 308,
           columnNumber: 37
         }
       }, locker_r.status), /*#__PURE__*/React.createElement("td", {
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 184,
+          lineNumber: 309,
           columnNumber: 37
         }
       }, /*#__PURE__*/React.createElement(Link, {
@@ -449,7 +611,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 185,
+          lineNumber: 310,
           columnNumber: 41
         }
       }, "Edit"), "\xA0", /*#__PURE__*/React.createElement("button", {
@@ -461,7 +623,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         __self: _this,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 189,
+          lineNumber: 314,
           columnNumber: 41
         }
       }, "Delete")));
@@ -472,18 +634,21 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 204,
+        lineNumber: 329,
         columnNumber: 17
       }
     }, "Add Locker"));
   }
-  function LockersForm(_ref10) {
+  function LockersForm(_ref18) {
     var _this2 = this;
-    var initial_values = _ref10.initial_values,
-      create_ok_bt_action = _ref10.create_ok_bt_action,
-      header_txt = _ref10.header_txt,
-      save_bt_txt = _ref10.save_bt_txt;
+    var initial_values = _ref18.initial_values,
+      create_ok_bt_action = _ref18.create_ok_bt_action,
+      header_txt = _ref18.header_txt,
+      save_bt_txt = _ref18.save_bt_txt;
     var dispatch = useDispatch();
+    var lockers_error = useSelector(function (state) {
+      return state.lockers.error;
+    });
     var _useState = useState(initial_values.full_address),
       _useState2 = _slicedToArray(_useState, 2),
       lockerAddress = _useState2[0],
@@ -515,11 +680,11 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     function ok_click() {
       dispatch(create_ok_bt_action({
         full_address: lockerAddress,
-        capacity_xs: lockerCapacityXS,
-        capacity_s: lockerCapacityS,
-        capacity_m: lockerCapacityM,
-        capacity_l: lockerCapacityL,
-        capacity_xl: lockerCapacityXL,
+        capacity_xs: parseInt(lockerCapacityXS),
+        capacity_s: parseInt(lockerCapacityS),
+        capacity_m: parseInt(lockerCapacityM),
+        capacity_l: parseInt(lockerCapacityL),
+        capacity_xl: parseInt(lockerCapacityXL),
         status: lockerState
       }));
     }
@@ -528,7 +693,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 243,
+        lineNumber: 372,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -536,21 +701,21 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 244,
+        lineNumber: 373,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("h2", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 245,
+        lineNumber: 374,
         columnNumber: 25
       }
     }, header_txt))), /*#__PURE__*/React.createElement("form", {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 250,
+        lineNumber: 379,
         columnNumber: 17
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -558,7 +723,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 251,
+        lineNumber: 380,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -567,7 +732,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 252,
+        lineNumber: 381,
         columnNumber: 25
       }
     }, "Full Address"), /*#__PURE__*/React.createElement("input", {
@@ -580,7 +745,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 255,
+        lineNumber: 384,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -588,7 +753,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 260,
+        lineNumber: 389,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -597,7 +762,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 261,
+        lineNumber: 390,
         columnNumber: 25
       }
     }, "Capacity XS"), /*#__PURE__*/React.createElement("input", {
@@ -611,7 +776,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 264,
+        lineNumber: 393,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -619,7 +784,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 270,
+        lineNumber: 399,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -628,7 +793,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 271,
+        lineNumber: 400,
         columnNumber: 25
       }
     }, "Capacity S"), /*#__PURE__*/React.createElement("input", {
@@ -642,7 +807,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 274,
+        lineNumber: 403,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -650,7 +815,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 279,
+        lineNumber: 408,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -659,7 +824,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 280,
+        lineNumber: 409,
         columnNumber: 25
       }
     }, "Capacity M"), /*#__PURE__*/React.createElement("input", {
@@ -673,7 +838,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 283,
+        lineNumber: 412,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -681,7 +846,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 288,
+        lineNumber: 417,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -690,7 +855,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 289,
+        lineNumber: 418,
         columnNumber: 25
       }
     }, "Capacity L"), /*#__PURE__*/React.createElement("input", {
@@ -704,7 +869,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 292,
+        lineNumber: 421,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -712,7 +877,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 297,
+        lineNumber: 426,
         columnNumber: 21
       }
     }, /*#__PURE__*/React.createElement("label", {
@@ -721,7 +886,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 298,
+        lineNumber: 427,
         columnNumber: 25
       }
     }, "Capacity XL"), /*#__PURE__*/React.createElement("input", {
@@ -735,7 +900,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 301,
+        lineNumber: 430,
         columnNumber: 25
       }
     })), /*#__PURE__*/React.createElement("div", {
@@ -743,7 +908,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 307,
+        lineNumber: 436,
         columnNumber: 21
       }
     }, "State", /*#__PURE__*/React.createElement("select", {
@@ -756,7 +921,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 309,
+        lineNumber: 438,
         columnNumber: 25
       }
     }, LOCKER_STATES.map(function (code) {
@@ -766,18 +931,27 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
         __self: _this2,
         __source: {
           fileName: _jsxFileName,
-          lineNumber: 312,
+          lineNumber: 441,
           columnNumber: 37
         }
       }, code);
-    }))), /*#__PURE__*/React.createElement(Link, {
+    }))), lockers_error && /*#__PURE__*/React.createElement("div", {
+      className: "alert alert-warning",
+      role: "alert",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 451,
+        columnNumber: 25
+      }
+    }, lockers_error), /*#__PURE__*/React.createElement(Link, {
       to: "/lockers",
       className: "btn btn-secondary",
       role: "button",
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 320,
+        lineNumber: 456,
         columnNumber: 21
       }
     }, "Cancel"), "\xA0", /*#__PURE__*/React.createElement("button", {
@@ -787,7 +961,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 324,
+        lineNumber: 460,
         columnNumber: 21
       }
     }, save_bt_txt)));
@@ -814,7 +988,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 352,
+        lineNumber: 488,
         columnNumber: 13
       }
     });
@@ -826,6 +1000,16 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     var initial_values = useSelector(function (state) {
       return select_locker_by_id(state, locker_id);
     });
+    if (!initial_values) {
+      return /*#__PURE__*/React.createElement("h2", {
+        __self: this,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 501,
+          columnNumber: 20
+        }
+      }, "Locker does not exist");
+    }
     function create_ok_bt_action(values) {
       values.id = locker_id;
       return update_locker([values, navigate]);
@@ -838,11 +1022,729 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 372,
+        lineNumber: 512,
         columnNumber: 13
       }
     });
   }
+  function LockerName(_ref19) {
+    var locker_id = _ref19.locker_id;
+    var locker_r = useSelector(function (state) {
+      return select_locker_by_id(state, locker_id);
+    });
+    return locker_r ? locker_r.full_address : '?';
+  }
+  // #endregion
+
+  // #region parcels
+  function ParcelsList() {
+    var _this3 = this;
+    var dispatch = useDispatch();
+    var lockers_status = useSelector(function (state) {
+      return state.lockers.status;
+    });
+    var parcels_status = useSelector(function (state) {
+      return state.parcels.status;
+    });
+    var parcels_list = useSelector(select_all_parcels);
+    useEffect(function () {
+      if (lockers_status === 'idle') {
+        // parcels need lockers data too
+        dispatch(fetch_lockers());
+      }
+      if (parcels_status === 'idle') {
+        dispatch(fetch_parcels());
+      }
+    }, [lockers_status, parcels_status, dispatch]);
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "row",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 547,
+        columnNumber: 17
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "col",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 548,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement(Link, {
+      to: "/",
+      className: "btn btn-primary",
+      role: "button",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 549,
+        columnNumber: 25
+      }
+    }, "Home"))), /*#__PURE__*/React.createElement("div", {
+      className: "row",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 554,
+        columnNumber: 17
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "col",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 555,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("h2", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 556,
+        columnNumber: 25
+      }
+    }, "Parcels"))), /*#__PURE__*/React.createElement("table", {
+      className: "table",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 560,
+        columnNumber: 17
+      }
+    }, /*#__PURE__*/React.createElement("thead", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 561,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("tr", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 562,
+        columnNumber: 25
+      }
+    }, /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 563,
+        columnNumber: 29
+      }
+    }, "Sender full name"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 564,
+        columnNumber: 29
+      }
+    }, "Sender phone"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 565,
+        columnNumber: 29
+      }
+    }, "Sender email"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 567,
+        columnNumber: 29
+      }
+    }, "Receiver full name"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 568,
+        columnNumber: 29
+      }
+    }, "Receiver phone"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 569,
+        columnNumber: 29
+      }
+    }, "Receiver email"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 571,
+        columnNumber: 29
+      }
+    }, "Size"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 572,
+        columnNumber: 29
+      }
+    }, "Current locker"), /*#__PURE__*/React.createElement("th", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 573,
+        columnNumber: 29
+      }
+    }))), /*#__PURE__*/React.createElement("tbody", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 576,
+        columnNumber: 21
+      }
+    }, parcels_list.map(function (parcel_r) {
+      return /*#__PURE__*/React.createElement("tr", {
+        key: parcel_r.id,
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 579,
+          columnNumber: 33
+        }
+      }, /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 580,
+          columnNumber: 37
+        }
+      }, parcel_r.sender_full_name), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 581,
+          columnNumber: 37
+        }
+      }, parcel_r.sender_phone), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 582,
+          columnNumber: 37
+        }
+      }, parcel_r.sender_email), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 583,
+          columnNumber: 37
+        }
+      }, parcel_r.receiver_full_name), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 584,
+          columnNumber: 37
+        }
+      }, parcel_r.receiver_phone), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 585,
+          columnNumber: 37
+        }
+      }, parcel_r.receiver_email), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 586,
+          columnNumber: 37
+        }
+      }, parcel_r.size), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 587,
+          columnNumber: 37
+        }
+      }, /*#__PURE__*/React.createElement(LockerName, {
+        locker_id: parcel_r.locker_now_id,
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 588,
+          columnNumber: 41
+        }
+      })), /*#__PURE__*/React.createElement("td", {
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 590,
+          columnNumber: 37
+        }
+      }, /*#__PURE__*/React.createElement(Link, {
+        to: "/parcels/edit/".concat(parcel_r.id),
+        className: "btn btn-primary",
+        role: "button",
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 591,
+          columnNumber: 41
+        }
+      }, "Edit"), "\xA0", /*#__PURE__*/React.createElement("button", {
+        type: "button",
+        className: "btn btn-danger",
+        onClick: function onClick(e) {
+          return dispatch(delete_parcel(parcel_r.id));
+        },
+        __self: _this3,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 595,
+          columnNumber: 41
+        }
+      }, "Delete")));
+    }))), /*#__PURE__*/React.createElement(Link, {
+      to: "/parcels/add",
+      className: "btn btn-primary",
+      role: "button",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 610,
+        columnNumber: 17
+      }
+    }, "Add Parcel"));
+  }
+  function ParcelsForm(_ref20) {
+    var _this4 = this;
+    var initial_values = _ref20.initial_values,
+      create_ok_bt_action = _ref20.create_ok_bt_action,
+      header_txt = _ref20.header_txt,
+      save_bt_txt = _ref20.save_bt_txt;
+    var dispatch = useDispatch();
+    var lockers_list = useSelector(select_all_lockers);
+    var parcels_error = useSelector(function (state) {
+      return state.parcels.error;
+    });
+    var _useState15 = useState(initial_values.sender_full_name),
+      _useState16 = _slicedToArray(_useState15, 2),
+      parcelSName = _useState16[0],
+      setParcelSName = _useState16[1];
+    var _useState17 = useState(initial_values.sender_phone),
+      _useState18 = _slicedToArray(_useState17, 2),
+      parcelSPhone = _useState18[0],
+      setParcelSPhone = _useState18[1];
+    var _useState19 = useState(initial_values.sender_email),
+      _useState20 = _slicedToArray(_useState19, 2),
+      parcelSEmail = _useState20[0],
+      setParcelSEmail = _useState20[1];
+    var _useState21 = useState(initial_values.receiver_full_name),
+      _useState22 = _slicedToArray(_useState21, 2),
+      parcelRName = _useState22[0],
+      setParcelRName = _useState22[1];
+    var _useState23 = useState(initial_values.receiver_phone),
+      _useState24 = _slicedToArray(_useState23, 2),
+      parcelRPhone = _useState24[0],
+      setParcelRPhone = _useState24[1];
+    var _useState25 = useState(initial_values.receiver_email),
+      _useState26 = _slicedToArray(_useState25, 2),
+      parcelREmail = _useState26[0],
+      setParcelREmail = _useState26[1];
+    var _useState27 = useState(initial_values.size),
+      _useState28 = _slicedToArray(_useState27, 2),
+      parcelSize = _useState28[0],
+      setParcelSize = _useState28[1];
+    var _useState29 = useState(initial_values.locker_now_id),
+      _useState30 = _slicedToArray(_useState29, 2),
+      parcelLockerNowId = _useState30[0],
+      setParcelLockerNowId = _useState30[1];
+    function ok_click() {
+      dispatch(create_ok_bt_action({
+        sender_full_name: parcelSName,
+        sender_phone: parcelSPhone,
+        sender_email: parcelSEmail,
+        receiver_full_name: parcelRName,
+        receiver_phone: parcelRPhone,
+        receiver_email: parcelREmail,
+        size: parcelSize,
+        locker_now_id: parseInt(parcelLockerNowId)
+      }));
+    }
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "row",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 656,
+        columnNumber: 17
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "col",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 657,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("h2", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 658,
+        columnNumber: 25
+      }
+    }, header_txt))), /*#__PURE__*/React.createElement("form", {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 663,
+        columnNumber: 17
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 665,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      htmlFor: "sender_full_name",
+      className: "form-label",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 666,
+        columnNumber: 25
+      }
+    }, "Sender full name"), /*#__PURE__*/React.createElement("input", {
+      className: "form-control",
+      id: "sender_full_name",
+      value: parcelSName,
+      onChange: function onChange(e) {
+        return setParcelSName(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 669,
+        columnNumber: 25
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 674,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      htmlFor: "sender_phone",
+      className: "form-label",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 675,
+        columnNumber: 25
+      }
+    }, "Sender phone"), /*#__PURE__*/React.createElement("input", {
+      className: "form-control",
+      id: "sender_phone",
+      value: parcelSPhone,
+      onChange: function onChange(e) {
+        return setParcelSPhone(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 678,
+        columnNumber: 25
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 683,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      htmlFor: "sender_email",
+      className: "form-label",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 684,
+        columnNumber: 25
+      }
+    }, "Sender email"), /*#__PURE__*/React.createElement("input", {
+      className: "form-control",
+      id: "sender_email",
+      value: parcelSEmail,
+      onChange: function onChange(e) {
+        return setParcelSEmail(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 687,
+        columnNumber: 25
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 693,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      htmlFor: "receiver_full_name",
+      className: "form-label",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 694,
+        columnNumber: 25
+      }
+    }, "Receiver full name"), /*#__PURE__*/React.createElement("input", {
+      className: "form-control",
+      id: "receiver_full_name",
+      value: parcelRName,
+      onChange: function onChange(e) {
+        return setParcelRName(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 697,
+        columnNumber: 25
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 702,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      htmlFor: "receiver_phone",
+      className: "form-label",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 703,
+        columnNumber: 25
+      }
+    }, "Receiver phone"), /*#__PURE__*/React.createElement("input", {
+      className: "form-control",
+      id: "receiver_phone",
+      value: parcelRPhone,
+      onChange: function onChange(e) {
+        return setParcelRPhone(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 706,
+        columnNumber: 25
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 711,
+        columnNumber: 21
+      }
+    }, /*#__PURE__*/React.createElement("label", {
+      htmlFor: "receiver_email",
+      className: "form-label",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 712,
+        columnNumber: 25
+      }
+    }, "Receiver email"), /*#__PURE__*/React.createElement("input", {
+      className: "form-control",
+      id: "receiver_email",
+      value: parcelREmail,
+      onChange: function onChange(e) {
+        return setParcelREmail(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 715,
+        columnNumber: 25
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 721,
+        columnNumber: 21
+      }
+    }, "Size", /*#__PURE__*/React.createElement("select", {
+      className: "form-select",
+      "aria-label": "Size",
+      value: parcelSize,
+      onChange: function onChange(e) {
+        return setParcelSize(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 723,
+        columnNumber: 25
+      }
+    }, PARCEL_SIZES.map(function (code) {
+      return /*#__PURE__*/React.createElement("option", {
+        value: code,
+        key: code,
+        __self: _this4,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 726,
+          columnNumber: 37
+        }
+      }, code);
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "mb-3",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 734,
+        columnNumber: 21
+      }
+    }, "Current Locker", /*#__PURE__*/React.createElement("select", {
+      className: "form-select",
+      "aria-label": "Current Locker",
+      value: parcelLockerNowId,
+      onChange: function onChange(e) {
+        return setParcelLockerNowId(e.target.value);
+      },
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 736,
+        columnNumber: 25
+      }
+    }, /*#__PURE__*/React.createElement("option", {
+      value: false,
+      key: false,
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 737,
+        columnNumber: 29
+      }
+    }, "Not selected"), lockers_list.map(function (locker_r) {
+      return /*#__PURE__*/React.createElement("option", {
+        value: locker_r.id,
+        key: locker_r.id,
+        __self: _this4,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 742,
+          columnNumber: 37
+        }
+      }, locker_r.full_address);
+    }))), parcels_error && /*#__PURE__*/React.createElement("div", {
+      className: "alert alert-warning",
+      role: "alert",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 752,
+        columnNumber: 25
+      }
+    }, parcels_error), /*#__PURE__*/React.createElement(Link, {
+      to: "/parcels",
+      className: "btn btn-secondary",
+      role: "button",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 757,
+        columnNumber: 21
+      }
+    }, "Cancel"), "\xA0", /*#__PURE__*/React.createElement("button", {
+      type: "button",
+      className: "btn btn-primary",
+      onClick: ok_click,
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 761,
+        columnNumber: 21
+      }
+    }, save_bt_txt)));
+  }
+  function ParcelsAdd() {
+    var navigate = useNavigate();
+    var initial_values = {
+      sender_full_name: '',
+      sender_phone: '+371',
+      sender_email: '',
+      receiver_full_name: '',
+      receiver_phone: '+371',
+      receiver_email: '',
+      size: 'XS',
+      locker_now_id: false
+    };
+    function create_ok_bt_action(values) {
+      return add_new_parcel([values, navigate]);
+    }
+    return /*#__PURE__*/React.createElement(ParcelsForm, {
+      initial_values: initial_values,
+      create_ok_bt_action: create_ok_bt_action,
+      header_txt: "Add Parcel",
+      save_bt_txt: "Create",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 790,
+        columnNumber: 13
+      }
+    });
+  }
+  function ParcelsEdit() {
+    var navigate = useNavigate();
+    var _useParams2 = useParams(),
+      parcel_id = _useParams2.parcel_id;
+    var initial_values = useSelector(function (state) {
+      return select_parcel_by_id(state, parcel_id);
+    });
+    if (!initial_values) {
+      return /*#__PURE__*/React.createElement("h2", {
+        __self: this,
+        __source: {
+          fileName: _jsxFileName,
+          lineNumber: 803,
+          columnNumber: 20
+        }
+      }, "Parcel does not exist");
+    }
+    function create_ok_bt_action(values) {
+      values.id = parcel_id;
+      return update_parcel([values, navigate]);
+    }
+    return /*#__PURE__*/React.createElement(ParcelsForm, {
+      initial_values: initial_values,
+      create_ok_bt_action: create_ok_bt_action,
+      header_txt: "Edit Parcel",
+      save_bt_txt: "Update",
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 814,
+        columnNumber: 13
+      }
+    });
+  }
+  // #endregion
+
   // #endregion
 
   var router = createHashRouter([{
@@ -854,7 +1756,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 389,
+        lineNumber: 833,
         columnNumber: 22
       }
     })
@@ -864,7 +1766,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 393,
+        lineNumber: 837,
         columnNumber: 22
       }
     })
@@ -874,41 +1776,53 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 397,
+        lineNumber: 841,
         columnNumber: 22
       }
     })
   }, {
     path: "parcels",
-    element: /*#__PURE__*/React.createElement("div", {
+    element: /*#__PURE__*/React.createElement(ParcelsList, {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 402,
+        lineNumber: 846,
         columnNumber: 22
       }
-    }, "Hello par! ", /*#__PURE__*/React.createElement(Link, {
-      to: "/",
+    })
+  }, {
+    path: "parcels/add",
+    element: /*#__PURE__*/React.createElement(ParcelsAdd, {
       __self: this,
       __source: {
         fileName: _jsxFileName,
-        lineNumber: 402,
-        columnNumber: 38
+        lineNumber: 850,
+        columnNumber: 22
       }
-    }, "home"), " ")
+    })
+  }, {
+    path: "parcels/edit/:parcel_id",
+    element: /*#__PURE__*/React.createElement(ParcelsEdit, {
+      __self: this,
+      __source: {
+        fileName: _jsxFileName,
+        lineNumber: 854,
+        columnNumber: 22
+      }
+    })
   }]);
   ReactDOM.createRoot(document.getElementById('react_parcel_root')).render( /*#__PURE__*/React.createElement(React.StrictMode, {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 409,
+      lineNumber: 861,
       columnNumber: 9
     }
   }, /*#__PURE__*/React.createElement("h1", {
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 410,
+      lineNumber: 862,
       columnNumber: 13
     }
   }, "Tornado Parcel"), /*#__PURE__*/React.createElement(Provider, {
@@ -916,7 +1830,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 412,
+      lineNumber: 864,
       columnNumber: 13
     }
   }, /*#__PURE__*/React.createElement(RouterProvider, {
@@ -924,7 +1838,7 @@ function _asyncToGenerator(fn) { return function () { var self = this, args = ar
     __self: this,
     __source: {
       fileName: _jsxFileName,
-      lineNumber: 413,
+      lineNumber: 865,
       columnNumber: 17
     }
   }))));

@@ -20,26 +20,49 @@
     async function fetch_m2(url, fetch_params, { return_json }) {
         let result = await fetch(url, fetch_params)
 
+        if (result.status == 400) {
+            throw Error(
+                await result.text()
+            )
+        }
+
         if (result.status != 200) {
-            throw Error('Wrong status code')
+            throw Error('Wrong status code (and this is not validation error)')
+        }
+
+        if (return_json) {
+            result = await result.json()
         }
 
         return result
     }
 
     // #region redux
+    function set_error_msg(state, action) {
+        state.error = action.error.message
+    }
+    function alert_error(state, action) {
+        alert(action.error.message)
+    }
+
+    // #region lockers
     const fetch_lockers = createAsyncThunk('lockers/fetch_lockers', async () => {
-        const record_l = await fetch("/api/locker").then(res => res.json())
+        const record_l = await fetch_m2(
+            "/api/locker",
+            {},
+            { return_json: true },
+        )
         return record_l
     })
     const add_new_locker = createAsyncThunk('lockers/add_1_locker', async ([record_data, navigate]) => {
-        const new_rec_id = await fetch(
+        const new_rec_id = await fetch_m2(
             "/api/locker",
             {
                 method: "POST",
                 body: JSON.stringify(record_data),
-            }
-        ).then(res => res.json())
+            },
+            { return_json: true },
+        )
         return [
             Object.assign(
                 { id: new_rec_id },
@@ -64,12 +87,13 @@
         ]
     })
     const delete_locker = createAsyncThunk('lockers/delete_locker', async (record_id) => {
-        await fetch(
+        await fetch_m2(
             "/api/locker",
             {
                 method: "DELETE",
                 body: JSON.stringify(record_id),
-            }
+            },
+            {}
         )
         return record_id
     })
@@ -79,7 +103,7 @@
         name: 'lockers',
         initialState: locker_adapter.getInitialState({
             status: 'idle',
-            // error: null
+            error: null
         }),
         reducers: {},
         extraReducers(builder) {
@@ -99,6 +123,10 @@
                     navigate('/lockers')
                 })
                 .addCase(delete_locker.fulfilled, locker_adapter.removeOne)
+
+                .addCase(add_new_locker.rejected, set_error_msg)
+                .addCase(update_locker.rejected, set_error_msg)
+                .addCase(delete_locker.rejected, alert_error)
         }
     })
 
@@ -107,10 +135,106 @@
         selectById: select_locker_by_id,
         // selectIds: selectPostIds
     } = locker_adapter.getSelectors(state => state.lockers)
+    // #endregion
+
+    // #region parcel
+    const fetch_parcels = createAsyncThunk('parcels/fetch_parcels', async () => {
+        const record_l = await fetch_m2(
+            "/api/parcel",
+            {},
+            { return_json: true },
+        )
+        return record_l
+    })
+    const add_new_parcel = createAsyncThunk('parcels/add_1_parcel', async ([record_data, navigate]) => {
+        const new_rec_id = await fetch_m2(
+            "/api/parcel",
+            {
+                method: "POST",
+                body: JSON.stringify(record_data),
+            },
+            { return_json: true },
+        )
+        return [
+            Object.assign(
+                { id: new_rec_id },
+                record_data,
+            ),
+            navigate
+        ]
+    })
+    const update_parcel = createAsyncThunk('parcels/update_parcel', async ([record_data, navigate]) => {
+        await fetch_m2(
+            "/api/parcel",
+            {
+                method: "PUT",
+                body: JSON.stringify(record_data),
+            },
+            {}
+        )
+
+        return [
+            record_data,
+            navigate
+        ]
+    })
+    const delete_parcel = createAsyncThunk('parcels/delete_parcel', async (record_id) => {
+        await fetch_m2(
+            "/api/parcel",
+            {
+                method: "DELETE",
+                body: JSON.stringify(record_id),
+            },
+            {}
+        )
+        return record_id
+    })
+
+    const parcel_adapter = createEntityAdapter()
+    const parcel_slice = createSlice({
+        name: 'parcels',
+        initialState: parcel_adapter.getInitialState({
+            status: 'idle',
+            error: null,
+        }),
+        reducers: {},
+        extraReducers(builder) {
+            builder
+                .addCase(fetch_parcels.fulfilled, (state, action) => {
+                    state.status = 'succeeded'
+                    parcel_adapter.upsertMany(state, action.payload)
+                })
+                .addCase(add_new_parcel.fulfilled, (state, action) => {
+                    state.error = null
+                    const [rec_with_id, navigate] = action.payload;
+                    parcel_adapter.addOne(state, rec_with_id)
+                    navigate('/parcels')
+                })
+                .addCase(update_parcel.fulfilled, (state, action) => {
+                    state.error = null
+                    const [parcel_r, navigate] = action.payload;
+                    parcel_adapter.setOne(state, parcel_r)
+                    navigate('/parcels')
+                })
+                .addCase(delete_parcel.fulfilled, parcel_adapter.removeOne)
+
+                .addCase(add_new_parcel.rejected, set_error_msg)
+                .addCase(update_parcel.rejected, set_error_msg)
+                .addCase(delete_parcel.rejected, alert_error)
+        }
+    })
+
+    const {
+        selectAll: select_all_parcels,
+        selectById: select_parcel_by_id,
+        // selectIds: selectPostIds
+    } = parcel_adapter.getSelectors(state => state.parcels)
+    // #endregion
 
     const store = configureStore({
         reducer: {
             lockers: locker_slice.reducer,
+            parcels: parcel_slice.reducer,
         }
     })
     // #endregion
@@ -130,6 +254,7 @@
         </div>
     )
 
+    // #region lockers
     function LockersList() {
         const dispatch = useDispatch()
 
@@ -214,6 +339,8 @@
     }) {
         const dispatch = useDispatch()
 
+        const lockers_error = useSelector(state => state.lockers.error)
+
         const [lockerAddress, setLockerAddress] = useState(initial_values.full_address);
 
         const [lockerCapacityXS, setLockerCapacityXS] = useState(initial_values.capacity_xs);
@@ -228,11 +355,13 @@
             dispatch(
                 create_ok_bt_action({
                     full_address: lockerAddress,
-                    capacity_xs: lockerCapacityXS,
-                    capacity_s: lockerCapacityS,
-                    capacity_m: lockerCapacityM,
-                    capacity_l: lockerCapacityL,
-                    capacity_xl: lockerCapacityXL,
+
+                    capacity_xs: parseInt(lockerCapacityXS),
+                    capacity_s: parseInt(lockerCapacityS),
+                    capacity_m: parseInt(lockerCapacityM),
+                    capacity_l: parseInt(lockerCapacityL),
+                    capacity_xl: parseInt(lockerCapacityXL),
+
                     status: lockerState,
                 })
             )
@@ -317,6 +446,13 @@
                         </select>
                     </div>
 
+                    {
+                        lockers_error &&
+                        <div className="alert alert-warning" role="alert">
+                            {lockers_error}
+                        </div>
+                    }
+
                     <Link to="/lockers" className="btn btn-secondary" role="button">
                         Cancel
                     </Link>
@@ -361,6 +497,10 @@
         const { locker_id } = useParams();
 
         const initial_values = useSelector(state => select_locker_by_id(state, locker_id))
+        if (!initial_values) {
+            return <h2>Locker does not exist</h2>
+        }
+
         function create_ok_bt_action(values) {
             values.id = locker_id
             return update_locker(
@@ -376,6 +516,310 @@
             />
         )
     }
+
+    function LockerName({ locker_id }) {
+        const locker_r = useSelector(state => select_locker_by_id(state, locker_id))
+        return locker_r ?
+            locker_r.full_address : '?'
+    }
+    // #endregion
+
+    // #region parcels
+    function ParcelsList() {
+        const dispatch = useDispatch()
+
+        const lockers_status = useSelector(state => state.lockers.status)
+        const parcels_status = useSelector(state => state.parcels.status)
+        const parcels_list = useSelector(select_all_parcels)
+
+        useEffect(() => {
+            if (lockers_status === 'idle') {
+                // parcels need lockers data too
+                dispatch(fetch_lockers())
+            }
+            if (parcels_status === 'idle') {
+                dispatch(fetch_parcels())
+            }
+        }, [lockers_status, parcels_status, dispatch])
+
+        return (
+            <>
+                <div className="row">
+                    <div className="col">
+                        <Link to="/" className="btn btn-primary" role="button">
+                            Home
+                        </Link>
+                    </div>
+                </div>
+                <div className="row">
+                    <div className="col">
+                        <h2>Parcels</h2>
+                    </div>
+                </div>
+
+                <table className="table">
+                    <thead>
+                        <tr>
+                            <th>Sender full name</th>
+                            <th>Sender phone</th>
+                            <th>Sender email</th>
+
+                            <th>Receiver full name</th>
+                            <th>Receiver phone</th>
+                            <th>Receiver email</th>
+
+                            <th>Size</th>
+                            <th>Current locker</th>
+                            <th />
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {
+                            parcels_list.map(parcel_r => (
+                                <tr key={parcel_r.id}>
+                                    <td>{parcel_r.sender_full_name}</td>
+                                    <td>{parcel_r.sender_phone}</td>
+                                    <td>{parcel_r.sender_email}</td>
+                                    <td>{parcel_r.receiver_full_name}</td>
+                                    <td>{parcel_r.receiver_phone}</td>
+                                    <td>{parcel_r.receiver_email}</td>
+                                    <td>{parcel_r.size}</td>
+                                    <td>
+                                        <LockerName locker_id={parcel_r.locker_now_id} />
+                                    </td>
+                                    <td>
+                                        <Link to={`/parcels/edit/${parcel_r.id}`} className="btn btn-primary" role="button">
+                                            Edit
+                                        </Link>
+                                        &nbsp;
+                                        <button
+                                            type="button" className="btn btn-danger"
+                                            onClick={e => dispatch(
+                                                delete_parcel(parcel_r.id)
+                                            )}
+                                        >
+                                            Delete
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))
+                        }
+                    </tbody>
+                </table>
+
+                <Link to="/parcels/add" className="btn btn-primary" role="button">
+                    Add Parcel
+                </Link>
+            </>
+        )
+    }
+    function ParcelsForm({
+        initial_values,
+        create_ok_bt_action,
+        header_txt, save_bt_txt,
+    }) {
+        const dispatch = useDispatch()
+
+        const lockers_list = useSelector(select_all_lockers)
+        const parcels_error = useSelector(state => state.parcels.error)
+
+        const [parcelSName, setParcelSName] = useState(initial_values.sender_full_name);
+        const [parcelSPhone, setParcelSPhone] = useState(initial_values.sender_phone);
+        const [parcelSEmail, setParcelSEmail] = useState(initial_values.sender_email);
+
+        const [parcelRName, setParcelRName] = useState(initial_values.receiver_full_name);
+        const [parcelRPhone, setParcelRPhone] = useState(initial_values.receiver_phone);
+        const [parcelREmail, setParcelREmail] = useState(initial_values.receiver_email);
+
+        const [parcelSize, setParcelSize] = useState(initial_values.size);
+        const [parcelLockerNowId, setParcelLockerNowId] = useState(initial_values.locker_now_id);
+
+        function ok_click() {
+            dispatch(
+                create_ok_bt_action({
+                    sender_full_name: parcelSName,
+                    sender_phone: parcelSPhone,
+                    sender_email: parcelSEmail,
+
+                    receiver_full_name: parcelRName,
+                    receiver_phone: parcelRPhone,
+                    receiver_email: parcelREmail,
+
+                    size: parcelSize,
+                    locker_now_id: parseInt(parcelLockerNowId),
+                })
+            )
+        }
+
+        return (
+            <>
+                <div className="row">
+                    <div className="col">
+                        <h2>
+                            {header_txt}
+                        </h2>
+                    </div>
+                </div>
+                <form>
+
+                    <div className="mb-3">
+                        <label htmlFor="sender_full_name" className="form-label">
+                            Sender full name
+                        </label>
+                        <input
+                            className="form-control" id="sender_full_name"
+                            value={parcelSName} onChange={e => setParcelSName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label htmlFor="sender_phone" className="form-label">
+                            Sender phone
+                        </label>
+                        <input
+                            className="form-control" id="sender_phone"
+                            value={parcelSPhone} onChange={e => setParcelSPhone(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label htmlFor="sender_email" className="form-label">
+                            Sender email
+                        </label>
+                        <input
+                            className="form-control" id="sender_email"
+                            value={parcelSEmail} onChange={e => setParcelSEmail(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mb-3">
+                        <label htmlFor="receiver_full_name" className="form-label">
+                            Receiver full name
+                        </label>
+                        <input
+                            className="form-control" id="receiver_full_name"
+                            value={parcelRName} onChange={e => setParcelRName(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label htmlFor="receiver_phone" className="form-label">
+                            Receiver phone
+                        </label>
+                        <input
+                            className="form-control" id="receiver_phone"
+                            value={parcelRPhone} onChange={e => setParcelRPhone(e.target.value)}
+                        />
+                    </div>
+                    <div className="mb-3">
+                        <label htmlFor="receiver_email" className="form-label">
+                            Receiver email
+                        </label>
+                        <input
+                            className="form-control" id="receiver_email"
+                            value={parcelREmail} onChange={e => setParcelREmail(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="mb-3">
+                        Size
+                        <select className="form-select" aria-label="Size" value={parcelSize} onChange={e => setParcelSize(e.target.value)}>
+                            {
+                                PARCEL_SIZES.map(code => (
+                                    <option value={code} key={code}>
+                                        {code}
+                                    </option>
+                                ))
+                            }
+                        </select>
+                    </div>
+
+                    <div className="mb-3">
+                        Current Locker
+                        <select className="form-select" aria-label="Current Locker" value={parcelLockerNowId} onChange={e => setParcelLockerNowId(e.target.value)}>
+                            <option value={false} key={false}>
+                                Not selected
+                            </option>
+                            {
+                                lockers_list.map(locker_r => (
+                                    <option value={locker_r.id} key={locker_r.id}>
+                                        {locker_r.full_address}
+                                    </option>
+                                ))
+                            }
+                        </select>
+                    </div>
+
+                    {
+                        parcels_error &&
+                        <div className="alert alert-warning" role="alert">
+                            {parcels_error}
+                        </div>
+                    }
+
+                    <Link to="/parcels" className="btn btn-secondary" role="button">
+                        Cancel
+                    </Link>
+                    &nbsp;
+                    <button
+                        type="button" className="btn btn-primary" onClick={ok_click}
+                    >
+                        {save_bt_txt}
+                    </button>
+                </form>
+            </>
+        )
+    }
+    function ParcelsAdd() {
+        const navigate = useNavigate()
+
+        const initial_values = {
+            sender_full_name: '',
+            sender_phone: '+371',
+            sender_email: '',
+            receiver_full_name: '',
+            receiver_phone: '+371',
+            receiver_email: '',
+            size: 'XS',
+            locker_now_id: false,
+        }
+        function create_ok_bt_action(values) {
+            return add_new_parcel(
+                [values, navigate]
+            )
+        }
+
+        return (
+            <ParcelsForm
+                initial_values={initial_values}
+                create_ok_bt_action={create_ok_bt_action}
+                header_txt="Add Parcel" save_bt_txt="Create"
+            />
+        )
+    }
+    function ParcelsEdit() {
+        const navigate = useNavigate()
+        const { parcel_id } = useParams();
+
+        const initial_values = useSelector(state => select_parcel_by_id(state, parcel_id))
+        if (!initial_values) {
+            return <h2>Parcel does not exist</h2>
+        }
+
+        function create_ok_bt_action(values) {
+            values.id = parcel_id
+            return update_parcel(
+                [values, navigate]
+            )
+        }
+
+        return (
+            <ParcelsForm
+                initial_values={initial_values}
+                create_ok_bt_action={create_ok_bt_action}
+                header_txt="Edit Parcel" save_bt_txt="Update"
+            />
+        )
+    }
+    // #endregion
+
     // #endregion
 
     const router = createHashRouter([
@@ -399,7 +843,15 @@
 
         {
             path: "parcels",
-            element: <div>Hello par! <Link to="/">home</Link> </div>,
+            element: <ParcelsList />,
+        },
+        {
+            path: "parcels/add",
+            element: <ParcelsAdd />,
+        },
+        {
+            path: "parcels/edit/:parcel_id",
+            element: <ParcelsEdit />,
         },
     ]);
 
